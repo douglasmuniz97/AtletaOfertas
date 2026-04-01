@@ -1,11 +1,8 @@
-import os
 import json
+import os
 
-# Detecta a pasta onde o postador.py está (Raiz)
+# Pega o diretório onde este arquivo (postador.py) está localizado
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# Monta o caminho para o JSON na pasta nova
-caminho_json = os.path.join(BASE_DIR, 'scraper_atleta', 'ofertas_academia.json')
 
 def formatar_mensagem(produto):
     # Lógica de "Copywriting" para o Atleta Ofertas
@@ -18,7 +15,7 @@ def formatar_mensagem(produto):
     mensagem = (
         f"🔥 *OFERTA NO ATLETA OFERTAS* 🔥\n\n"
         f"🏆 *{titulo[:60]}...*\n"
-        f"📉 *Status:* {desconto}\n"
+        f"📉 *Status:* {desconto} OFF\n"
         f"💰 *Preço:* R$ {preco:.2f}\n\n"
         f"🛒 *COMPRE AQUI:* {link}\n\n"
         f"⚠️ _Preço sujeito a alteração a qualquer momento._\n"
@@ -27,27 +24,35 @@ def formatar_mensagem(produto):
     return mensagem
 
 def gerar_relatorio():
-    caminho_json = r'C:\AtletaOfertas\core\scraper_atleta\ofertas_academia.json'
+    # Caminho do JSON dentro da pasta do scraper
+    caminho_json = os.path.join(BASE_DIR, 'scraper_atleta', 'ofertas_academia.json')
+    # Caminho do TXT de saída na raiz do projeto
+    caminho_txt = os.path.join(BASE_DIR, 'POSTAGENS_WHATSAPP.txt')
     
     if not os.path.exists(caminho_json):
-        print("❌ Erro: O arquivo de ofertas do ML não foi encontrado!")
+        print(f"❌ Erro: Arquivo não encontrado em: {caminho_json}")
         return
 
     with open(caminho_json, 'r', encoding='utf-8') as f:
         ofertas = json.load(f)
 
-    # Ordenar pelas melhores ofertas (menor preço primeiro, ou critério de desconto)
+    if not ofertas:
+        print("⚠️ O arquivo JSON está vazio. Nenhuma oferta encontrada.")
+        return
+
+    # Ordenar pelas melhores ofertas (menor preço primeiro)
     ofertas_ordenadas = sorted(ofertas, key=lambda x: x.get('preco_atual', 999))
 
-    print(f"\n🚀 Gerando {len(ofertas_ordenadas)} Cards de Ofertas...\n")
+    print(f"\n🚀 Gerando Cards para as melhores ofertas encontradas...\n")
     
-    with open('POSTAGENS_WHATSAPP.txt', 'w', encoding='utf-8') as f_out:
-        for i, item in enumerate(ofertas_ordenadas[:10]): # Pega as 10 melhores
+    with open(caminho_txt, 'w', encoding='utf-8') as f_out:
+        # Pega as 15 melhores ofertas para ter um bom volume no WhatsApp
+        for i, item in enumerate(ofertas_ordenadas[:15]): 
             card = formatar_mensagem(item)
             f_out.write(card)
-            print(f"✅ Card {i+1} gerado com sucesso!")
+            print(f"✅ Card {i+1} formatado: {item.get('titulo')[:30]}...")
 
-    print("\n✨ PRONTO! Abra o arquivo 'POSTAGENS_WHATSAPP.txt' e comece a lucrar!")
+    print(f"\n✨ PRONTO! O arquivo foi gerado em:\n{caminho_txt}")
 
 if __name__ == "__main__":
     gerar_relatorio()
