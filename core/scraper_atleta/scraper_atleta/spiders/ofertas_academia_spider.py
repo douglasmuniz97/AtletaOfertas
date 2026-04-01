@@ -2,16 +2,34 @@ import scrapy
 
 class AtletaOfertasSpider(scrapy.Spider):
     name = 'atleta_spider'
-    start_urls = ['https://www.mercadolivre.com.br/ofertas?category=MLB1276']
+    
+    # Lista de termos estratégicos para diversificar o Atleta Ofertas
+    termos_busca = [
+        'creatina%20monohidratada',
+        'whey%20protein',
+        'smartband%20esportivo',
+        'fone%20bluetooth%20corrida',
+        'kit%20camiseta%20dry%20fit',
+        'shorts%20treino%20masculino',
+        'joelheira%20compressao',
+        'balanca%20bioimpedancia',
+        'pasta%20de%20amendoim%201kg'
+    ]
+
+    # Gerando as URLs de ofertas automaticamente para cada termo
+    start_urls = [
+        f'https://www.mercadolivre.com.br/ofertas?container_id=MLB779362-1&keyword={termo}' 
+        for termo in termos_busca
+    ]
 
     def parse(self, response):
         # Pegamos todos os blocos que parecem um card de produto
         for produto in response.xpath('//div[contains(@class, "promotion-item")] | //div[contains(@class, "poly-card")]'):
-            # Busca o título em qualquer tag de texto dentro do card
-            titulo = produto.xpath('.//a[contains(@class, "title")]/text() | .//p/text()').get()
+            # Busca o título
+            titulo = produto.xpath('.//a[contains(@class, "title")]/text() | .//p/text() | .//h3/text()').get()
             link = produto.xpath('.//a/@href').get()
             
-            # Pegamos TODOS os números que aparecem no card (preço antigo e novo)
+            # Pegamos os números que aparecem no card (preço antigo e novo)
             precos = produto.xpath('.//span[contains(@class, "fraction")]/text()').getall()
             
             if len(precos) >= 2 and link:
@@ -24,6 +42,7 @@ class AtletaOfertasSpider(scrapy.Spider):
                     
                     desconto = (1 - (v_atual / v_antigo)) * 100
 
+                    # Mantemos o filtro de 25% para garantir que só venha promoção boa
                     if desconto >= 25:
                         yield {
                             'titulo': titulo.strip() if titulo else "Produto Academia",
@@ -35,7 +54,7 @@ class AtletaOfertasSpider(scrapy.Spider):
                 except:
                     continue
 
-        # Paginação: Vamos tentar o seletor padrão do ML para "Próximo"
+        # Paginação para varrer mais de uma página de cada termo
         proxima = response.css('a.andes-pagination__button--next::attr(href)').get()
         if proxima:
             yield response.follow(proxima, self.parse)
