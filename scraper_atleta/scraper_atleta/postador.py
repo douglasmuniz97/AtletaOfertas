@@ -1,5 +1,11 @@
-import json
 import os
+import json
+
+# Detecta a pasta onde o postador.py está (Raiz)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Monta o caminho para o JSON na pasta nova
+caminho_json = os.path.join(BASE_DIR, 'scraper_atleta', 'ofertas_academia.json')
 
 def formatar_mensagem(produto):
     # Lógica de "Copywriting" para o Atleta Ofertas

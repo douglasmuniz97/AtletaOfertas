@@ -1,0 +1,6 @@
+venv/
+*.pyc
+__pycache__/
+ofertas_academia.json
+POSTAGENS_WHATSAPP.txt
+.vscode/
