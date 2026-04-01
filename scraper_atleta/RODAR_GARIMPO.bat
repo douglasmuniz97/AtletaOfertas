@@ -1,40 +1,36 @@
 @echo off
-title MOTOR ATLETA OFERTAS - GARIMPO AUTOMATICO
-color 0B
+title MOTOR ATLETA OFERTAS
+color 0A
 
-:: Entra na pasta onde o projeto Scrapy realmente mora
-cd /d C:\AtletaOfertas\core\scraper_atleta
+:: Define a pasta atual como base para evitar erros de caminho
+set BASE_DIR=%~dp0
+cd /d "%BASE_DIR%"
 
-echo ======================================================
-echo           INICIANDO MOTOR ATLETA OFERTAS
-echo ======================================================
-echo.
+:: 1. Ativa o ambiente
+echo [1/4] Ativando ambiente...
+call venv\Scripts\activate.bat
 
-:: 1. Ativa a venv usando o caminho fixo do seu PC
-echo [1/3] Ativando Ambiente Virtual (venv)...
-if exist "C:\AtletaOfertas\venv\Scripts\activate.bat" (
-    call "C:\AtletaOfertas\venv\Scripts\activate.bat"
+:: 2. Roda o Scrapy
+echo [2/4] Garimpando ofertas...
+scrapy crawl atleta_spider -O "scraper_atleta/ofertas_academia.json"
+
+:: 3. Roda o Postador
+echo [3/4] Formatando mensagens...
+python postador.py
+
+:: 4. Finalizacao
+echo [4/4] Processo concluido!
+
+:: Pequena pausa para o Windows liberar o arquivo
+timeout /t 2 >nul
+
+:: Abre o arquivo de postagens de forma explicita
+if exist "POSTAGENS_WHATSAPP.txt" (
+    echo Abrindo ofertas no Bloco de Notas...
+    start notepad.exe "POSTAGENS_WHATSAPP.txt"
 ) else (
-    echo [ERRO] Nao achei a venv em C:\AtletaOfertas\venv
+    echo.
+    echo [ERRO] O arquivo "POSTAGENS_WHATSAPP.txt" nao foi encontrado na pasta:
+    echo %cd%
     pause
-    exit
 )
-
-:: 2. Executa o Crawler (O -O garante que o JSON seja limpo)
-echo [2/3] Rodando Crawler no Mercado Livre...
-scrapy crawl atleta_spider -O ofertas_academia.json
-
-:: 3. Executa o Postador
-echo [3/3] Formatando ofertas para o WhatsApp...
-echo.
-if exist "postador.py" (
-    python postador.py
-) else (
-    echo [ERRO] postador.py nao encontrado nesta pasta!
-)
-
-echo.
-echo ======================================================
-echo   PROCESSO CONCLUIDO! COPIE AS OFERTAS ACIMA.
-echo ======================================================
-pause
